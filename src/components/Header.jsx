@@ -42,14 +42,16 @@ function Header() {
 
 
         {/* Buttons */}
-        <Link to="/Login">
+        <Link to="/Register">
         <button className="px-5 py-1 bg-black-600 border border-red-600 text-white mb-10 ml-20 rounded-md hover:bg-red-700 font-semibold">
-          Sign In 
+          Sign Up 
         </button>
         </Link>
-        <button className="px-7 py-1 bg-black-500 border border-red-600 text-white mb-10 ml-10 rounded-md hover:bg-red-600 font-semibold">
-          Play
+        <Link to="/Login">
+        <button className="px-7 py-1 bg-black-500 border border-red-600 text-white mb-10 ml-5 rounded-md hover:bg-red-600 font-semibold">
+          Sign In
         </button>
+        </Link>
       </div>
     </div>
     

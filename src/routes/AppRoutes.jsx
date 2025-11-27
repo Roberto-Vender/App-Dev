@@ -10,6 +10,7 @@ import Incorrect from "../pages/Incorrect";
 import Logic from "../pages/Logic";
 import Endurance from "../pages/Endurance";
 import LeaderBoard from "../pages/LeaderBoard";
+import Register from "../pages/Register";
 
 
 
@@ -27,6 +28,7 @@ export default function AppRoutes() {
       <Route path="Logic" element={<Logic />} />
       <Route path="Endurance" element={<Endurance />} />
       <Route path="LeaderBoard" element={<LeaderBoard />} />
+      <Route path="Register" element={<Register />} />
     </Routes>
   );
 }
