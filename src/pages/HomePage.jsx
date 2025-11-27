@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -19,12 +20,14 @@ const HomePage = () => {
 
       {/* Button */}
       <div id="Features" className="flex justify-center mt-20">
+        <Link to="/Login">
         <button className="flex items-center gap-2 px-20 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold">
           <svg width="11" height="14" viewBox="0 0 11 14" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M0 0V14L11 7L0 0Z" fill="#F5F5F5" />
           </svg>
           Start Playing Now
         </button>
+        </Link>
       </div>
 
 
