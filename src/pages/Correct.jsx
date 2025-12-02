@@ -1,40 +1,56 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import RiddleHeader from "../components/RiddleHeader";
-import Footer from "../components/Footer";
 
 const Correct = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const { answer, score = 0, page = 1, totalPages = 25 } = location.state || {};
+
+  const nextPage = page < totalPages ? page + 1 : 1;
+
+  // Friendly congratulatory message instead of explanation
+  const congratMessage = `Nice guess! "${answer}" is correct. 🎉`;
+
   return (
-    <div className="min-h-screen w-full bg-black font-poppins font-semibold">
+    <div className="min-h-screen w-full bg-black font-poppins font-semibold text-white">
       <RiddleHeader />
 
       {/* Back Button */}
       <Link to="/Dashboard">
-        <button className="text-red-600 ml-7 -mt-10 block hover:text-red-400 cursor-pointer"  >
+        <button className="text-red-600 ml-7 -mt-10 block hover:text-red-400 cursor-pointer">
           ←
         </button>
       </Link>
- 
 
       {/* Boxes Section */}
       <div className="flex justify-center gap-10 mt-20 flex-wrap">
+        <div className="flex flex-col items-center bg-gray-600 rounded-2xl w-120 h-auto p-6">
 
-        {/* Riddle Card */}
-        <div className="flex flex-col items-center bg-gray-600 text-white rounded-2xl w-120 h-80 p-6 ">
-            <div className=" text-green-600 text-3xl text-center mr-10">✅ Correct!</div>
-            <span className=" text-green-600 text-1xl mt-5 text-center">+50 points</span>     
-            <div className=" mt-10 text-green-600 text-xl text-center">EXPLAINATION</div>
-            <div className="  text-white text-xl text-center">
-            A piano has keys (the black and white keys) but cannot open locks like a key would.
-            </div>
-            <Link to="/Incorrect">
-            <div className="text-red-600 text-sm mt-12 ml-85 ">Next Puzzle →</div>
-          </Link>
-        </div>  
+          <div className="text-green-500 text-3xl text-center">✅ Correct!</div>
+
+          {/* Score */}
+          <span className="text-green-400 text-xl mt-5 text-center">Score: {score}</span>
+
+          {/* Answer */}
+          <div className="mt-8 text-green-400 text-lg">Answer:</div>
+          <div className="text-white text-xl text-center">{answer}</div>
+
+          {/* Friendly Message */}
+          <div className="mt-6 text-green-400 text-lg text-center">{congratMessage}</div>
+
+          {/* Next Puzzle Button */}
+          <button
+            onClick={() => navigate("/Riddles", { state: { page: nextPage, score } })}
+            className="mt-10 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white"
+          >
+            Next Puzzle →
+          </button>
+
         </div>
-        
-
-</div>
+      </div>
+    </div>
   );
 };
 
