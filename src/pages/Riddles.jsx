@@ -136,7 +136,6 @@ const Riddles = () => {
 
       <div className="flex justify-center mt-3 text-sm">
         <button
-          onClick={handleShowHint}
           disabled={hintUsedThisPage || hintCount >= MAX_HINTS}
           className={`px-3 py-1 rounded ${
             hintUsedThisPage || hintCount >= MAX_HINTS
@@ -144,7 +143,7 @@ const Riddles = () => {
               : "bg-yellow-600 hover:bg-yellow-700 text-white"
           }`}
         >
-          💡 {showHint && riddle?.hint ? riddle.hint : "Show Hint"} ({hintCount}/{MAX_HINTS})
+          💡 {"Hint Left"} ({hintCount}/{MAX_HINTS})
         </button>
       </div>
 

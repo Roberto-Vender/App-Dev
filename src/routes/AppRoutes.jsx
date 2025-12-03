@@ -12,6 +12,9 @@ import LogicCorrect from "../pages/LogicCorrect";
 import LogicIncorrect from "../pages/LogicIncorrect";
 import LogicSummary from "../pages/LogicSummary";
 import Endurance from "../pages/Endurance";
+import EnduranceCorrect from "../pages/EnduranceCorrect";
+import EnduranceIncorrect from "../pages/EnduranceIncorrect";
+import EnduranceSummary from "../pages/EnduranceSummary";
 import LeaderBoard from "../pages/LeaderBoard";
 import Register from "../pages/Register";
 import Summary from "../pages/Summary";
@@ -34,6 +37,9 @@ export default function AppRoutes() {
       <Route path="LogicIncorrect" element={<LogicIncorrect />} />
       <Route path="LogicSummary" element={<LogicSummary />} />
       <Route path="Endurance" element={<Endurance />} />
+      <Route path="EnduranceCorrect" element={<EnduranceCorrect />} />
+      <Route path="EnduranceIncorrect" element={<EnduranceIncorrect />} />
+      <Route path="EnduranceSummary" element={<EnduranceSummary />} />
       <Route path="LeaderBoard" element={<LeaderBoard />} />
       <Route path="Register" element={<Register />} />
       <Route path="Summary" element={<Summary />} />

@@ -1,121 +1,224 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import EnduranceHeader from "../components/EnduranceHeader";
 
 const Endurance = () => {
-  const [showModal, setShowModal] = React.useState(false);
+  const MAX_HINTS = 5;
+  const TOTAL_TIME = 10 * 60; // 10 minutes in seconds
+  const TOTAL_QUESTIONS = 25;
+
+  const [question, setQuestion] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showHint, setShowHint] = useState(false);
+  const [hintUsedThisPage, setHintUsedThisPage] = useState(false);
+  const [hintCount, setHintCount] = useState(0);
+  const [userAnswer, setUserAnswer] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [score, setScore] = useState(0);
+  const [timeRemaining, setTimeRemaining] = useState(TOTAL_TIME);
+  const [quizStarted, setQuizStarted] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const API_BASE = import.meta.env.VITE_API_URL || "";
+
+  // Global timer
+  useEffect(() => {
+    if (!quizStarted) return;
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => (prev <= 1 ? 0 : prev - 1));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [quizStarted]);
+
+  // Navigate to summary when time runs out
+  useEffect(() => {
+    if (timeRemaining === 0 && quizStarted) {
+      navigate("/EnduranceSummary", {
+        state: {
+          score,
+          questionsAnswered: currentPage,
+          totalTime: TOTAL_TIME,
+          timeUsed: TOTAL_TIME - timeRemaining,
+          hintCount,
+          lastPage: currentPage, // ✅ Pass lastPage here
+        },
+      });
+    }
+  }, [timeRemaining, quizStarted, navigate, score, currentPage, hintCount]);
+
+  // Initialize state from navigation
+  useEffect(() => {
+    const state = location.state || {};
+    if (typeof state.score === "number") setScore(state.score);
+    if (typeof state.hintCount === "number") setHintCount(state.hintCount);
+    if (typeof state.timeRemaining === "number") setTimeRemaining(state.timeRemaining);
+    if (state.page && state.page !== currentPage) setCurrentPage(state.page);
+    setQuizStarted(true);
+  }, []);
+
+  // Fetch question on page change
+  useEffect(() => {
+    const fetchGeneratedQuestion = async (page = 1) => {
+      setLoading(true);
+      setError(null);
+      setShowHint(false);
+      setHintUsedThisPage(false);
+      setUserAnswer("");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/endurance/generate?page=${page}`, {
+          method: "POST",
+        });
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        const payload = await res.json();
+        setQuestion(payload.data || null);
+      } catch (e) {
+        setError("Unable to load endurance question.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGeneratedQuestion(currentPage);
+  }, [currentPage]);
+
+  const handleShowHint = () => {
+    if (hintUsedThisPage || hintCount >= MAX_HINTS) return;
+    setShowHint(true);
+    setHintUsedThisPage(true);
+    setHintCount((prev) => prev + 1);
+  };
+
+  const formatTime = (seconds) =>
+    `${Math.floor(seconds / 60)}:${seconds % 60 < 10 ? "0" : ""}${seconds % 60}`;
+
+  const submitAnswer = () => {
+    if (!question?.answer) return;
+
+    const isCorrect =
+      userAnswer.trim().toLowerCase() === question.answer.trim().toLowerCase();
+    const newScore = score + (isCorrect ? 1 : 0);
+
+    const resultState = {
+      answer: question.answer,
+      explanation: question.explanation || "Question answered.",
+      score: newScore,
+      page: currentPage,
+      hintCount,
+      timeRemaining,
+      lastPage: currentPage, // ✅ Add lastPage here
+      type: question.type,
+      question: question.question,
+    };
+
+    navigate(isCorrect ? "/EnduranceCorrect" : "/EnduranceIncorrect", {
+      state: resultState,
+    });
+  };
 
   return (
-    <div className="min-h-screen w-full bg-black font-poppins font-semibold">
+    <div className="min-h-screen w-full bg-black font-poppins font-semibold text-white flex flex-col">
       <EnduranceHeader />
 
-      {/* Back Button */}
-      <Link to="/Dashboard">
-        <button className="text-red-600 ml-7 -mt-20 block hover:text-red-400 cursor-pointer">
-          ←
-        </button>
-      </Link>
+      <div className="px-4 sm:px-6 md:px-8 -mt-10 mb-15">
+        <Link to="/Dashboard">
+          <button className="text-red-600 hover:text-red-400 cursor-pointer">
+            ← Back
+          </button>
+        </Link>
+      </div>
 
-      {/* Title */}
-      <div className="flex justify-center mt-10">
-        <div className="text-center text-lg text-white bg-yellow-600 py-2 px-6 rounded-xl shadow-lg w-full max-w-xs">
-          <div className="font-semibold text-xl mb-2">Current Streak</div>
-          <div className="text-sm text-white/90">5x Puzzles Completed</div>
-          <div className="flex justify-center mt-3"></div>
+      <div className="flex justify-center items-center mt-3 gap-10">
+        <div className="text-sm text-yellow-600">
+          Question {currentPage} of {TOTAL_QUESTIONS}
         </div>
+        <div
+          className={`text-2xl font-bold ${timeRemaining <= 60 ? "text-red-500" : "text-green-400"}`}
+        >
+          ⏱️ {formatTime(timeRemaining)}
+        </div>
+        <div className="text-sm text-blue-400">Score: {score}</div>
       </div>
 
-      <svg
-        className="mt-5 ml-55"
-        width="900"
-        height="6"
-        viewBox="0 0 1062 6"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <rect width="1062" height="6" rx="3" fill="#374151" fillOpacity="0.45" />
-      </svg>
-
-      <div className="flex justify-center items-center mt-3 gap-45 text-yellow-600 text-lg">
-        <div>💡 Hint: Think about musical instruments...</div>
-        <div>⏱️ 05:00</div>
+      <div className="flex justify-center mt-3 text-sm">
+        <button
+          onClick={handleShowHint}
+          disabled={hintUsedThisPage || hintCount >= MAX_HINTS}
+          className={`px-3 py-1 rounded ${
+            hintUsedThisPage || hintCount >= MAX_HINTS
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-yellow-600 hover:bg-yellow-700 text-white"
+          }`}
+        >
+          💡 {hintUsedThisPage ? "Hint used" : `Show Hint (${MAX_HINTS - hintCount} left)`}
+        </button>
       </div>
 
-      {/* Boxes Section */}
-      <div className="flex justify-center gap-10 mt-5 flex-wrap">
-        {/* Riddle Card */}
-        <div className="flex flex-col items-start bg-gray-600 text-white rounded-2xl w-150 h-70 p-6">
-          <div className="text-sm text-blue-800">Riddle</div>
-          <div className="text-lg mt-5 text-center w-full">
-            What has keys but can't open locks?
+      <div className="flex justify-center mt-8">
+        <div className="flex flex-col items-center bg-gray-800 text-white rounded-2xl max-w-md w-full p-6 border border-gray-700">
+          <div className="text-xs text-purple-300 mb-2">
+            Type: {question?.type === "riddle" ? "🎭 Riddle" : "🧠 Logic"}
           </div>
+          <div className="text-lg text-center">
+            {loading ? "Loading question..." : error ? error : question?.question || "No question available"}
+          </div>
+
+          {showHint && question?.hint && (
+            <div className="mt-4 bg-yellow-800/30 border border-yellow-600 p-3 rounded text-yellow-300 text-center">
+              <b>Hint:</b> {question.hint}
+            </div>
+          )}
 
           <input
             type="text"
-            placeholder="Type your answer here..."
-            className="bg-blue-600 text-white ml-8 placeholder-gray-300 py-2 px-4 w-120 rounded-md mt-20 text-left"
+            placeholder={timeRemaining <= 0 ? "Time's up! Moving to next page..." : "Enter your answer..."}
+            value={userAnswer}
+            onChange={(e) => timeRemaining > 0 && setUserAnswer(e.target.value)}
+            disabled={timeRemaining <= 0}
+            className={`mt-6 px-4 py-2 rounded bg-black border text-white w-full text-center ${
+              timeRemaining <= 0
+                ? "border-red-500 text-red-400 cursor-not-allowed"
+                : "border-gray-500"
+            }`}
           />
-        </div>
-      </div>
 
-      <div className="flex justify-center mt-6 gap-20">
-        <div className="py-2 w-50 text-white bg-yellow-600 text-center rounded-md cursor-pointer">
-          Get Hint
-        </div>
-
-        {/* SUBMIT TRIGGERS MODAL */}
-        <div
-          onClick={() => setShowModal(true)}
-          className="py-2 w-50 text-white bg-green-600 text-center rounded-md cursor-pointer"
-        >
-          Submit Answer
-        </div>
-      </div>
-
-      {/* ================== MODAL ================== */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50">
-
-          <div className="bg-white/20 backdrop-blur-xl border border-white/30 text-yellow-600 p-6 rounded-2xl w-100 text-center shadow-2xl">
-            <h2 className="text-2xl font-bold mb-4">Endurance Run Complete!</h2>
-            <p className="mb-6 text-white/90">Great Effort!</p>
-
-            <div className="flex justify-center">
-          <div className="grid grid-cols-2 gap-10">
-            
-            <div className="border border-green-600 w-40 h-30 rounded-2xl">
-            <div className="mt-2"> 🧩 </div>
-            <div className="text-white text-1xl text-center mt-2"> Puzzles Solved </div>
-            <div className="text-white text-2xl text-center mt-2"> 12 </div>
+          {timeRemaining <= 0 && (
+            <div className="mt-4 text-red-400 text-center font-bold animate-pulse">
+              ⏱️ Time's up! Moving to next question...
             </div>
-            <div className="border border-green-600 w-40 h-30 rounded-2xl">
-              <div className="mt-2"> 🔥 </div>
-            <div className="text-white text-1xl text-center mt-2"> Max Streak</div>
-            <div className="text-white text-2xl text-center mt-2"> 8 </div>
-            </div>
+          )}
 
-            <div className="border border-green-600 w-40 h-30 rounded-2xl">
-              <div className="mt-2"> ⭐ </div>
-            <div className="text-white text-1xl text-center mt-2">  Points Earned</div>
-            <div className="text-white text-2xl text-center mt-2"> 120 </div>
-            </div>
-            <div className="border border-green-600 w-40 h-30 rounded-2xl">
-              <div className="mt-2"> ⏱️ </div>
-            <div className="text-white text-1xl text-center mt-2">  Time Survived</div>
-            <div className="text-white text-2xl text-center mt-2"> 4:20 </div>
-            </div>
-            <Link to="">
-            <div className="text-yellow-600  hover:text-yellow-400">[Play Again]</div>
-            </Link>
-            <Link to="/Dashboard">
-            <div className="text-yellow-600 hover:text-yellow-400">[Dashboard]</div>  
-            </Link>
+          <div className="flex justify-between items-center mt-6 w-full gap-2">
+            <button
+              onClick={handleShowHint}
+              disabled={hintUsedThisPage || hintCount >= MAX_HINTS || timeRemaining <= 0}
+              className={`px-4 py-2 rounded font-bold ${
+                hintUsedThisPage || hintCount >= MAX_HINTS || timeRemaining <= 0
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-yellow-600 hover:bg-yellow-700 text-black"
+              }`}
+            >
+              Show Hint
+            </button>
+
+            <button
+              onClick={submitAnswer}
+              disabled={timeRemaining <= 0}
+              className={`px-6 py-2 rounded text-black font-bold ${
+                timeRemaining <= 0
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700"
+              }`}
+            >
+              Submit Answer
+            </button>
           </div>
         </div>
-          </div> 
-
-        </div>
-      )}
+      </div>
     </div>
   );
 };

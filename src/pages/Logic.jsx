@@ -122,7 +122,7 @@ const Logic = () => {
     <div className="min-h-screen w-full bg-black font-poppins font-semibold text-white flex flex-col">
       <LogicHeader />
 
-      <div className="px-4 sm:px-6 md:px-8 mb-20 -mt-10">
+      <div className="px-4 sm:px-6 md:px-8 mb-20 -mt-10 ">
         <Link to="/Dashboard">
           <button className="text-red-600 hover:text-red-400 cursor-pointer ">
             ← Back
@@ -136,7 +136,6 @@ const Logic = () => {
 
       <div className="flex justify-center mt-3 text-sm">
         <button
-          onClick={handleShowHint}
           disabled={hintUsedThisPage || hintCount >= MAX_HINTS} // DISABLE if used this page or max reached
           className={`px-3 py-1 rounded ${
             hintUsedThisPage || hintCount >= MAX_HINTS
@@ -144,11 +143,11 @@ const Logic = () => {
               : "bg-yellow-600 hover:bg-yellow-700 text-white"
           }`}
         >
-          💡 {showHint && question?.hint ? question.hint : "Show Hint"} ({hintCount}/{MAX_HINTS})
+          💡 {"Hint Left"} ({hintCount}/{MAX_HINTS})
         </button>
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center -mt-20">
         <div className="flex flex-col items-center bg-gray-800 text-white rounded-2xl max-w-md w-full p-6 border border-gray-700">
           <div className="text-lg text-center">
             {loading
