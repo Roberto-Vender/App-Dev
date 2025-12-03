@@ -41,10 +41,12 @@ const Incorrect = () => {
     page = 1,
     totalPages = 25,
   } = location.state || {};
+  const { hintCount = 0 } = location.state || {};
 
   // Use brief explanation
   const explanation = briefExplanations[answer] || "No explanation available.";
-  const nextPage = page < totalPages ? page + 1 : 1;
+  // Move to next page (page is the current page being displayed, so add 1 to advance)
+  const nextPage = page + 1;
 
   return (
     <div className="min-h-screen w-full bg-black font-poppins font-semibold text-white">
@@ -78,7 +80,7 @@ const Incorrect = () => {
 
           {/* Try Another */}
           <button
-            onClick={() => navigate("/Riddles", { state: { page: nextPage, score } })}
+            onClick={() => navigate("/Riddles", { state: { page: nextPage, score, hintCount } })}
             className="mt-6 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white"
           >
             Try Another →

@@ -77,6 +77,15 @@ const Login = () => {
         <button onClick={ loginPost} className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg shadow-md hover:bg-blue-700 transition mt-5">
             Login
           </button>
+
+          {/* Sign Up Link */}
+        <p className="text-center text-sm text-gray-600 mt-4">
+          Don't have an account?{' '}
+          <Link to="/Register" className="text-blue-600 underline">
+            Sign Up
+          </Link>
+        </p>
+        
       </div>
     </div>
   );

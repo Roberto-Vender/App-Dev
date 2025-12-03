@@ -8,9 +8,13 @@ import Riddles from "../pages/Riddles";
 import Correct from "../pages/Correct";
 import Incorrect from "../pages/Incorrect";
 import Logic from "../pages/Logic";
+import LogicCorrect from "../pages/LogicCorrect";
+import LogicIncorrect from "../pages/LogicIncorrect";
+import LogicSummary from "../pages/LogicSummary";
 import Endurance from "../pages/Endurance";
 import LeaderBoard from "../pages/LeaderBoard";
 import Register from "../pages/Register";
+import Summary from "../pages/Summary";
 
 
 
@@ -26,9 +30,13 @@ export default function AppRoutes() {
       <Route path="Correct" element={<Correct />} />
       <Route path="Incorrect" element={<Incorrect />} />
       <Route path="Logic" element={<Logic />} />
+      <Route path="LogicCorrect" element={<LogicCorrect />} />
+      <Route path="LogicIncorrect" element={<LogicIncorrect />} />
+      <Route path="LogicSummary" element={<LogicSummary />} />
       <Route path="Endurance" element={<Endurance />} />
       <Route path="LeaderBoard" element={<LeaderBoard />} />
       <Route path="Register" element={<Register />} />
+      <Route path="Summary" element={<Summary />} />
     </Routes>
   );
 }

@@ -3,28 +3,28 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import RiddleHeader from "../components/RiddleHeader";
 
 const Riddles = () => {
+  const MAX_HINTS = 5;
   const [riddle, setRiddle] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showHint, setShowHint] = useState(false);
-  const [showAnswer, setShowAnswer] = useState(false);
+  const [hintCount, setHintCount] = useState(0);
+  const [hintUsedThisPage, setHintUsedThisPage] = useState(false); // track per page
   const [userAnswer, setUserAnswer] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(25);
   const [score, setScore] = useState(0);
-  
 
   const navigate = useNavigate();
   const location = useLocation();
   const API_BASE = import.meta.env.VITE_API_URL || "";
 
-  
-
+  // Fetch riddle
   const fetchGeneratedRiddle = async (page = 1) => {
     setLoading(true);
     setError(null);
     setShowHint(false);
-    setShowAnswer(false);
+    setHintUsedThisPage(false); // reset hint for new page
     setUserAnswer("");
 
     try {
@@ -34,6 +34,12 @@ const Riddles = () => {
       if (!res.ok) throw new Error(`Status ${res.status}`);
 
       const payload = await res.json();
+
+      if (payload.data.page > payload.data.totalPages) {
+        navigate("/Summary", { state: { score, hintCount } });
+        return;
+      }
+
       setRiddle(payload.data || null);
       setCurrentPage(payload.data.page || 1);
       setTotalPages(payload.data.totalPages || 25);
@@ -45,25 +51,44 @@ const Riddles = () => {
   };
 
   useEffect(() => {
-    // If navigated here with state (page/score), pick that up
     const state = location.state || {};
+
     if (typeof state.score === "number") setScore(state.score);
+    if (typeof state.hintCount === "number") setHintCount(state.hintCount);
+
     if (state.page && state.page !== currentPage) {
       setCurrentPage(state.page);
-      // fetchGeneratedRiddle will run from the effect below when currentPage changes
       return;
     }
 
     fetchGeneratedRiddle(currentPage);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage]);
 
+  // Show hint (1 per page, max 5 total)
+  const handleShowHint = () => {
+    if (hintUsedThisPage) {
+      setError("You have already used a hint on this page.");
+      return;
+    }
+
+    if (hintCount >= MAX_HINTS) {
+      setError(`Hint limit reached (${MAX_HINTS}).`);
+      return;
+    }
+
+    setError(null);
+    setShowHint(true);
+    setHintUsedThisPage(true);
+    setHintCount((prev) => prev + 1);
+  };
+
+  // Submit answer
   const submitAnswer = () => {
     if (!riddle?.answer) return;
 
     const isCorrect =
-      userAnswer.trim().toLowerCase() ===
-      riddle.answer.trim().toLowerCase();
+      userAnswer.trim().toLowerCase() === riddle.answer.trim().toLowerCase();
 
     const explanation =
       riddle.explanation ||
@@ -77,7 +102,14 @@ const Riddles = () => {
       score: newScore,
       page: currentPage,
       totalPages,
+      hintCount,
+      question: riddle.question,
     };
+
+    if (currentPage >= totalPages) {
+      navigate("/Summary", { state: { score: newScore, hintCount } });
+      return;
+    }
 
     if (isCorrect) {
       navigate("/Correct", { state: resultState });
@@ -90,7 +122,7 @@ const Riddles = () => {
     <div className="min-h-screen w-full bg-black font-poppins font-semibold text-white flex flex-col">
       <RiddleHeader />
 
-      <div className="px-4 sm:px-6 md:px-8 mt-4">
+      <div className="px-4 sm:px-6 md:px-8 mb-20 -mt-10">
         <Link to="/Dashboard">
           <button className="text-red-600 hover:text-red-400 cursor-pointer">
             ← Back
@@ -98,20 +130,27 @@ const Riddles = () => {
         </Link>
       </div>
 
-      {/* Page Info */}
       <div className="flex justify-center mt-3 text-sm text-yellow-600">
         Page {currentPage} of {totalPages}
       </div>
 
-      {/* Hint */}
-      <div className="flex justify-center mt-3 text-sm text-yellow-600">
-        💡 Hint: {showHint ? riddle?.hint : "Click to show hint"}
+      <div className="flex justify-center mt-3 text-sm">
+        <button
+          onClick={handleShowHint}
+          disabled={hintUsedThisPage || hintCount >= MAX_HINTS}
+          className={`px-3 py-1 rounded ${
+            hintUsedThisPage || hintCount >= MAX_HINTS
+              ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+              : "bg-yellow-600 hover:bg-yellow-700 text-white"
+          }`}
+        >
+          💡 {showHint && riddle?.hint ? riddle.hint : "Show Hint"} ({hintCount}/{MAX_HINTS})
+        </button>
       </div>
 
-      {/* Riddle Card */}
-      <div className="flex justify-center gap-10 mt-5 flex-wrap">
-        <div className="flex flex-col items-center bg-gray-800 text-white rounded-2xl w-150 h-auto p-6 border border-gray-700">
-          <div className="text-lg mt-5 text-center">
+      <div className="flex justify-center mt-8">
+        <div className="flex flex-col items-center bg-gray-800 text-white rounded-2xl max-w-md w-full p-6 border border-gray-700">
+          <div className="text-lg text-center">
             {loading
               ? "Loading riddle..."
               : error
@@ -119,7 +158,12 @@ const Riddles = () => {
               : riddle?.question || "No riddle available"}
           </div>
 
-          {/* Answer input */}
+          {showHint && riddle?.hint && (
+            <div className="mt-4 bg-yellow-800/30 border border-yellow-600 p-3 rounded text-yellow-300 text-center">
+              <b>Hint:</b> {riddle.hint}
+            </div>
+          )}
+
           <input
             type="text"
             placeholder="Enter your answer..."
@@ -128,17 +172,19 @@ const Riddles = () => {
             className="mt-6 px-4 py-2 rounded bg-black border border-gray-500 text-white w-full text-center"
           />
 
-          {/* Buttons */}
-          <div className="flex justify-between items-center mt-5 w-full">
-            {/* Show Hint Button */}
+          <div className="flex justify-between items-center mt-6 w-full gap-2">
             <button
-              onClick={() => setShowHint(true)}
-              className="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded text-black font-bold"
+              onClick={handleShowHint}
+              disabled={hintUsedThisPage || hintCount >= MAX_HINTS}
+              className={`px-7 py-2 rounded font-bold ${
+                hintUsedThisPage || hintCount >= MAX_HINTS
+                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                  : "bg-yellow-600 hover:bg-yellow-700 text-black"
+              }`}
             >
               Show Hint
             </button>
 
-            {/* Submit Answer Button */}
             <button
               onClick={submitAnswer}
               className="bg-green-600 hover:bg-green-700 px-6 py-2 rounded text-black font-bold"
@@ -146,20 +192,6 @@ const Riddles = () => {
               Submit Answer
             </button>
           </div>
-
-          {/* Show Answer (optional) */}
-          {showAnswer && (
-            <div className="mt-4 text-red-400 text-center">
-              Answer: {riddle?.answer}
-            </div>
-          )}
-
-          <button
-            onClick={() => setShowAnswer(true)}
-            className="mt-3 text-sm text-gray-400 underline"
-          >
-            Reveal Answer
-          </button>
         </div>
       </div>
     </div>

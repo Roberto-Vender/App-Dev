@@ -7,6 +7,7 @@ const Correct = () => {
   const navigate = useNavigate();
 
   const { answer, score = 0, page = 1, totalPages = 25 } = location.state || {};
+  const { hintCount = 0 } = location.state || {};
 
   const nextPage = page < totalPages ? page + 1 : 1;
 
@@ -42,7 +43,7 @@ const Correct = () => {
 
           {/* Next Puzzle Button */}
           <button
-            onClick={() => navigate("/Riddles", { state: { page: nextPage, score } })}
+            onClick={() => navigate("/Riddles", { state: { page: nextPage, score, hintCount } })}
             className="mt-10 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded text-white"
           >
             Next Puzzle →
